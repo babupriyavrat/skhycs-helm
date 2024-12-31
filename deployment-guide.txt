@@ -1,0 +1,293 @@
+# Deployment Guide for Secure Data System
+
+## Option 1: Hugging Face Spaces (Recommended)
+
+### Prerequisites
+```bash
+pip install huggingface_hub gradio
+```
+
+### 1. Create Dockerfile
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3-dev \
+    redis-server \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Start Redis and run the application
+CMD service redis-server start && python app.py
+```
+
+### 2. Create requirements.txt
+```text
+pandas==2.1.0
+numpy==1.24.0
+pydantic==2.4.0
+cerberus==1.3.4
+cryptography==41.0.3
+pycryptodome==3.19.0
+torch==2.1.0
+transformers==4.34.0
+tokenizers==0.15.0
+redis==5.0.1
+bcrypt==4.0.1
+gradio==3.50.2
+```
+
+### 3. Create app.py with Gradio Interface
+```python
+import gradio as gr
+from secure_data_system import SecureDataSystem, SensitiveData
+
+system = SecureDataSystem()
+
+def process_data(data_type, value, metadata, password, operation):
+    try:
+        data = SensitiveData(
+            data_type=data_type,
+            value=value,
+            metadata=eval(metadata)  # Convert string to dict
+        )
+        
+        if operation == "encrypt":
+            result = system.encrypt_data(data, password)
+            return f"Encrypted: {result.hex()}"
+        else:
+            result = system.decrypt_data(bytes.fromhex(value), password)
+            return f"Decrypted/Decoy: {result}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# Create Gradio interface
+iface = gr.Interface(
+    fn=process_data,
+    inputs=[
+        gr.Dropdown(choices=["credit_card", "crypto_wallet", "digital_wallet"], label="Data Type"),
+        gr.Textbox(label="Value"),
+        gr.Textbox(label="Metadata (as dict)", value="{'issuer': 'VISA', 'expiry': '12/25'}"),
+        gr.Textbox(label="Password"),
+        gr.Radio(choices=["encrypt", "decrypt"], label="Operation")
+    ],
+    outputs=gr.Textbox(label="Result"),
+    title="Secure Data System",
+    description="Encrypt sensitive data with honey encryption and decoy generation"
+)
+
+if __name__ == "__main__":
+    iface.launch(server_name="0.0.0.0", server_port=7860)
+```
+
+### 4. Deploy to Hugging Face Spaces
+```bash
+# Login to Hugging Face
+huggingface-cli login
+
+# Create a new Space
+huggingface-cli repo create secure-data-system --type space
+
+# Clone the space
+git clone https://huggingface.co/spaces/YOUR_USERNAME/secure-data-system
+
+# Copy files and deploy
+cp -r {Dockerfile,requirements.txt,app.py,secure_data_system.py} secure-data-system/
+cd secure-data-system
+git add .
+git commit -m "Initial deployment"
+git push
+```
+
+Visit: https://huggingface.co/spaces/YOUR_USERNAME/secure-data-system
+
+## Option 2: Railway
+
+### 1. Create Railway Configuration
+Create `railway.toml`:
+```toml
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "python app.py"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+
+[service]
+ports = [7860]
+```
+
+### 2. Deploy to Railway
+```bash
+# Install Railway CLI
+npm i -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Initialize project
+railway init
+
+# Deploy
+railway up
+```
+
+## Option 3: Google Cloud Run (Free Tier)
+
+### 1. Create cloudbuild.yaml
+```yaml
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/secure-data-system', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/secure-data-system']
+images:
+  - 'gcr.io/$PROJECT_ID/secure-data-system'
+```
+
+### 2. Deploy to Google Cloud Run
+```bash
+# Install Google Cloud SDK
+curl https://sdk.cloud.google.com | bash
+
+# Initialize Google Cloud
+gcloud init
+
+# Enable required APIs
+gcloud services enable cloudbuild.googleapis.com
+gcloud services enable run.googleapis.com
+
+# Build and deploy
+gcloud builds submit --config cloudbuild.yaml
+gcloud run deploy secure-data-system \
+    --image gcr.io/$PROJECT_ID/secure-data-system \
+    --platform managed \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --memory 2Gi
+```
+
+## Test Deployment
+
+Use this Python script to test your deployment:
+
+```python
+import requests
+import json
+
+def test_deployment(url):
+    # Test data
+    payload = {
+        "data_type": "credit_card",
+        "value": "4532015112830366",
+        "metadata": "{'issuer': 'VISA', 'expiry': '12/25'}",
+        "password": "test_password",
+        "operation": "encrypt"
+    }
+    
+    # Send request
+    response = requests.post(f"{url}/api/predict", json=payload)
+    
+    print(f"Status: {response.status_code}")
+    print(f"Response: {response.json()}")
+
+# Replace with your deployment URL
+deployment_url = "https://YOUR_DEPLOYMENT_URL"
+test_deployment(deployment_url)
+```
+
+## Memory and Resource Considerations
+
+1. Hugging Face Spaces:
+   - Free tier: 2GB RAM
+   - CPU: 2 vCPUs
+   - Storage: 5GB
+
+2. Railway:
+   - Free tier: $5 credit monthly
+   - RAM: Up to 512MB
+   - CPU: 1 vCPU
+   - Storage: 1GB
+
+3. Google Cloud Run:
+   - Free tier: 2 million requests/month
+   - RAM: Up to 2GB
+   - CPU: 1-2 vCPUs
+   - Storage: 5GB
+
+## Monitoring
+
+Add this code to app.py for basic monitoring:
+
+```python
+import logging
+from prometheus_client import start_http_server, Counter, Histogram
+
+# Metrics
+REQUESTS = Counter('requests_total', 'Total requests')
+LATENCY = Histogram('request_latency_seconds', 'Request latency')
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Start metrics server
+start_http_server(8000)
+
+# Add metrics to process_data function
+def process_data(data_type, value, metadata, password, operation):
+    REQUESTS.inc()
+    with LATENCY.time():
+        try:
+            # ... existing code ...
+```
+
+## Troubleshooting
+
+1. Memory Issues:
+```bash
+# Monitor memory usage
+pip install memory_profiler
+python -m memory_profiler app.py
+```
+
+2. Redis Connection:
+```python
+# Test Redis connection
+import redis
+try:
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    r.ping()
+    print("Redis connection successful")
+except redis.ConnectionError:
+    print("Redis connection failed")
+```
+
+3. Model Loading:
+```python
+# Test model loading
+from transformers import AutoTokenizer, AutoModelForCausalLM
+try:
+    tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen-7B")
+    model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen-7B")
+    print("Model loaded successfully")
+except Exception as e:
+    print(f"Model loading failed: {str(e)}")
+```
