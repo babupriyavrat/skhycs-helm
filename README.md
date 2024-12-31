@@ -1,246 +1,189 @@
+#  Skhy CS  Helm - Secure Data System with Honey Encryption
 
-# Skhy CS  Helm - Secure Data System with Honey Encryption
 
-![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Dependencies](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen)
+A secure data management system with device-based authentication, honey encryption, and multi-environment deployment support.
 
-A comprehensive secure data handling system implementing honey encryption with decoy data generation using the Qwen2.5 LLM. The system provides robust protection for sensitive data such as credit card numbers, cryptocurrency wallets, and digital wallet information.
+## 🔑 Features
 
-## Table of Contents
-- [Features](#features)
-- [System Architecture](#system-architecture)
-- [Components](#components)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Deployment](#deployment)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
+- Device-based authentication and management
+- Honey encryption with decoy data generation
+- Multi-environment deployment support (Local, Gradle, Google Cloud)
+- Redis integration for device cache
+- Comprehensive testing suite
+- Secure configuration management
 
-## Features
+## 📋 Prerequisites
 
-- 🔐 Multi-layer encryption (Honey Encryption + RSA)
-- 🤖 AI-powered decoy data generation using Qwen2.5
-- 📊 Advanced data preprocessing and normalization
-- 🔄 Efficient caching with Redis
-- 🔍 Comprehensive validation and verification
-- 📝 Detailed logging and monitoring
-- 🚀 Easy deployment options
-- ⚡ High-performance processing pipeline
+- Python 3.11 or higher
+- Docker and Docker Compose (for local deployment)
+- Gradle 7.x or higher (for Gradle deployment)
+- Google Cloud SDK (for GCP deployment)
+- Redis (for production device cache)
 
-## System Architecture
+## 🛠️ Installation
 
-The system consists of several interconnected layers:
+### Local Development Setup
 
-```
-Input Layer → LLM Layer → Honey Encryption Core → RSA Layer → Processing Pipeline → Output Layer
-```
-
-### Data Flow
-1. Input data preprocessing and validation
-2. Tokenization and normalization
-3. Honey encryption with decoy generation
-4. RSA encryption layer
-5. Caching and output handling
-
-## Components
-
-### Core Components
-- `secure_data_system.py`: Main system implementation
-- `app.py`: Web interface using Gradio
-- `setup.sh`: Environment setup script
-- `requirements.txt`: Python dependencies
-- `Dockerfile`: Container configuration
-
-### Supporting Files
-- `cloudbuild.yaml`: Google Cloud Build configuration
-- `railway.toml`: Railway deployment configuration
-- Documentation and deployment guides
-
-## Requirements
-
-### System Requirements
-- Python 3.9+
-- Redis Server
-- 2GB+ RAM
-- 5GB+ Storage
-
-### Python Dependencies
-```
-pandas==2.1.0
-numpy==1.24.0
-pydantic==2.4.0
-cerberus==1.3.4
-cryptography==41.0.3
-pycryptodome==3.19.0
-torch==2.1.0
-transformers==4.34.0
-tokenizers==0.15.0
-redis==5.0.1
-bcrypt==4.0.1
-```
-
-## Installation
-
-### 1. Clone the Repository
+1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/secure-data-system.git
 cd secure-data-system
 ```
 
-### 2. Run Setup Script
+2. Create and activate virtual environment:
 ```bash
-chmod +x setup.sh
-sudo ./setup.sh
+python -m venv venv
+# For Unix/macOS:
+source venv/bin/activate
+# For Windows:
+venv\Scripts\activate
 ```
 
-### 3. Activate Virtual Environment
+3. Install dependencies:
 ```bash
-source secure_data_env/bin/activate
+pip install -r requirements.txt
 ```
 
-### 4. Verify Installation
+### Docker Setup
+
+1. Build and run using Docker Compose:
 ```bash
-python -c "from secure_data_system import SecureDataSystem; print('System ready')"
+docker-compose up --build
 ```
 
-## Usage
+2. For production builds:
+```bash
+docker build -t secure-data-system:latest .
+docker run -p 8000:8000 secure-data-system:latest
+```
 
-### Basic Usage
+### Gradle Setup
+
+1. Build the project:
+```bash
+./gradlew build
+```
+
+2. Build and push container image:
+```bash
+./gradlew jib
+```
+
+## 🚀 Deployment
+
+### Local Deployment
+
+1. Run the application:
+```bash
+python secure-data-system-device.py
+```
+
+2. Run tests:
+```bash
+pytest
+pytest --cov=secure_data_system tests/
+```
+
+### Google Cloud Deployment
+
+1. Configure Google Cloud SDK:
+```bash
+gcloud auth login
+gcloud config set project your-project-id
+```
+
+2. Deploy to App Engine:
+```bash
+gcloud app deploy app.yaml
+```
+
+3. View logs:
+```bash
+gcloud app logs tail
+```
+
+## 💻 Usage Example
+
 ```python
-from secure_data_system import SecureDataSystem, SensitiveData
+from secure_data_system import SecureDataSystem
 
 # Initialize system
 system = SecureDataSystem()
 
-# Create sensitive data
-data = SensitiveData(
+# Register a device
+user_id = "user123"
+device_id = system.register_device(user_id)
+
+# Encrypt sensitive data
+test_data = SensitiveData(
     data_type="credit_card",
     value="4532015112830366",
     metadata={"issuer": "VISA", "expiry": "12/25"}
 )
 
-# Encrypt data
+# Encrypt and decrypt
 password = "secure_password123"
-ciphertext = system.encrypt_data(data, password)
-
-# Decrypt data
-decrypted = system.decrypt_data(ciphertext, password)
-
-# Test with wrong password (generates decoy)
-decoy = system.decrypt_data(ciphertext, "wrong_password")
+ciphertext = system.encrypt_data(test_data, password)
+result = system.decrypt_data(ciphertext, password, device_id, user_id)
 ```
 
-### Web Interface
+## ⚙️ Configuration
+
+The system can be configured through environment variables or a `.env` file:
+
+```env
+ENVIRONMENT=development
+REDIS_HOST=localhost
+REDIS_PORT=6379
+JWT_SECRET_KEY=your-secret-key
+GOOGLE_CLOUD_PROJECT=your-project-id
+```
+
+## 🔒 Security Considerations
+
+1. **Secrets Management**:
+   - Use environment variables for local development
+   - Use Google Cloud Secret Manager for production
+   - Never commit sensitive data to version control
+
+2. **Device Authentication**:
+   - Implement device rotation policies
+   - Monitor failed authentication attempts
+   - Regularly audit device registrations
+
+3. **Data Protection**:
+   - All sensitive data is encrypted at rest
+   - Honey encryption provides protection against brute force attacks
+   - Decoy data generation for security through obscurity
+
+## 🧪 Testing
+
+Run the test suite:
 ```bash
-python app.py
-```
-Visit `http://localhost:7860` in your browser.
+# Run all tests
+pytest
 
-## Deployment
-
-### Hugging Face Spaces (Recommended)
-```bash
-huggingface-cli login
-huggingface-cli repo create secure-data-system --type space
-git clone https://huggingface.co/spaces/YOUR_USERNAME/secure-data-system
-cp -r {Dockerfile,requirements.txt,app.py,secure_data_system.py} secure-data-system/
-cd secure-data-system
-git add .
-git commit -m "Initial deployment"
-git push
+# Run with coverage report
+pytest --cov=secure_data_system tests/
 ```
 
-### Railway
-```bash
-npm i -g @railway/cli
-railway login
-railway init
-railway up
+## 📦 Project Structure
+
+```
+secure-data-system/
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── build.gradle
+├── app.yaml
+├── config.py
+├── secure-data-system-device.py
+├── tests/
+│   └── test_device_manager.py
+└── .gitignore
 ```
 
-### Google Cloud Run
-```bash
-gcloud builds submit --config cloudbuild.yaml
-gcloud run deploy secure-data-system \
-    --image gcr.io/$PROJECT_ID/secure-data-system \
-    --platform managed \
-    --region us-central1 \
-    --allow-unauthenticated
-```
-
-## Testing
-
-### Run Unit Tests
-```bash
-python -m pytest tests/
-```
-
-### Test Deployment
-```python
-python test_deployment.py
-```
-
-### Load Testing
-```bash
-pip install locust
-locust -f load_tests/locustfile.py
-```
-
-## Monitoring
-
-### View Metrics
-```bash
-curl localhost:8000/metrics
-```
-
-### Check Logs
-```bash
-tail -f /var/log/secure_data_system/app.log
-```
-
-## Performance Optimization
-
-### Memory Usage
-- Batch processing: 1000 records per batch
-- Redis cache: 10GB maximum
-- Model optimization: Quantized weights
-
-### Response Times
-- Encryption: <100ms
-- Decryption: <100ms
-- Decoy generation: <200ms
-
-## Troubleshooting
-
-### Common Issues
-
-1. Redis Connection
-```bash
-redis-cli ping
-```
-
-2. Memory Issues
-```bash
-python -m memory_profiler app.py
-```
-
-3. Model Loading
-```python
-python test_model_loading.py
-```
-
-## Security Considerations
-
-- All passwords are hashed using bcrypt
-- RSA key size: 4096 bits
-- Rate limiting: 3 attempts per minute
-- Automatic audit logging
-- Secure configuration handling
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -248,20 +191,20 @@ python test_model_loading.py
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-- Qwen team for the LLM model
-- Honey Encryption research papers
-- Open-source community
-
-## Contact
+- JWT for secure token management
+- Redis for high-performance caching
+- Google Cloud Platform for scalable deployment
+- Faker for generating realistic decoy data
 
 Your Name - [@babupriyavrat](https://linkedin.com/in/babupriyavrat)
 Project Link: [https://github.com/babupriyavrat/skhycs-helm](https://github.com/babupriyavrat/skhycs-helm)
 
 ---
 Made with ❤️ by Babu Priyavrat
+
