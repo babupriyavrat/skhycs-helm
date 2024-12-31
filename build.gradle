@@ -1,0 +1,23 @@
+plugins {
+    id 'application'
+    id 'java'
+    id 'com.google.cloud.tools.jib' version '3.4.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = 'com.securedata.Application'
+}
+
+jib {
+    from {
+        image = 'python:3.11-slim'
+    }
+    to {
+        image = 'gcr.io/your-project/secure-data-system'
+        tags = ['latest']
+    }
+}
