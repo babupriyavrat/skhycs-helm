@@ -1,4 +1,5 @@
-# Secure Data System with Honey Encryption
+
+# Skhy CS  Helm - Secure Data System with Honey Encryption
 
 ![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -259,8 +260,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-Your Name - [@yourusername](https://twitter.com/yourusername)
-Project Link: [https://github.com/yourusername/secure-data-system](https://github.com/yourusername/secure-data-system)
+Your Name - [@babupriyavrat](https://linkedin.com/in/babupriyavrat)
+Project Link: [https://github.com/babupriyavrat/skhycs-helm](https://github.com/babupriyavrat/skhycs-helm)
 
 ---
-Made with ❤️ by [Your Name]
+Made with ❤️ by Babu Priyavrat
