@@ -26,8 +26,7 @@ A secure data management system with device-based authentication, honey encrypti
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/secure-data-system.git
-cd secure-data-system
+git clone https://github.com/yourusername/skhycs-helm.git
 ```
 
 2. Create and activate virtual environment:
@@ -75,7 +74,7 @@ docker run -p 8000:8000 secure-data-system:latest
 
 1. Run the application:
 ```bash
-python secure-data-system-device.py
+python secure-data-system.py
 ```
 
 2. Run tests:
@@ -177,7 +176,7 @@ secure-data-system/
 ├── build.gradle
 ├── app.yaml
 ├── config.py
-├── secure-data-system-device.py
+├── secure-data-system.py
 ├── tests/
 │   └── test_device_manager.py
 └── .gitignore
