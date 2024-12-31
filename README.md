@@ -1,4 +1,5 @@
-# Secure Data System
+#  Skhy CS  Helm - Secure Data System with Honey Encryption
+
 
 A secure data management system with device-based authentication, honey encryption, and multi-environment deployment support.
 
@@ -201,6 +202,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Google Cloud Platform for scalable deployment
 - Faker for generating realistic decoy data
 
-## 📞 Support
+Your Name - [@babupriyavrat](https://linkedin.com/in/babupriyavrat)
+Project Link: [https://github.com/babupriyavrat/skhycs-helm](https://github.com/babupriyavrat/skhycs-helm)
 
-For support, please open an issue in the GitHub repository or contact the maintainers at support@example.com
+---
+Made with ❤️ by Babu Priyavrat
+
